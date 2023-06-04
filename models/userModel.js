@@ -1,5 +1,5 @@
 const mongoose = require('mongoose'); // Erase if already required
-
+const crypto = require('crypto');
 const bcrypt = require('bcrypt');
 const { ObjectId } = require('mongodb');
 // Declare the Schema of the Mongo model
@@ -25,7 +25,7 @@ var userSchema = new mongoose.Schema({
         unique:true,
     },
     password:{
-        type:String,
+        type: String,
         required:true,
     },
     role:{
@@ -51,18 +51,31 @@ var userSchema = new mongoose.Schema({
     refreshToken:{
         type: String,
     },
+    passwordChangedAt: {type:Date,},
+    passwordResetToken: {type:String,},
+    passwordResetExpires: {type:Date,},
 },{
     timestamps: true,
 });
 
-userSchema.pre('save',async function (){
+userSchema.pre('save',async function (next){
+    if(!this.isModified("password")){
+        next();
+    }
     const salt = await bcrypt.genSaltSync(10);
     this.password = await bcrypt.hash(this.password,salt);
 });
 
 userSchema.methods.isPasswordMatched = async function (enteredPassword){
     return await bcrypt.compare(enteredPassword, this.password);
-}
+};
+
+userSchema.methods.createPasswordResetToken = async function () {
+    const resettoken = crypto.randomBytes(32).toString("hex");
+    this.passwordResetToken = crypto.createHash('sha256').update(resettoken).digest('hex');
+    this.passwordResetExpires=Date.now() + 10 * 60 * 1000; //10 minutes
+    return resettoken;
+};
 
 //Export the model
 module.exports = mongoose.model('User', userSchema);
