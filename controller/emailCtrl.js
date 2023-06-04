@@ -6,7 +6,7 @@ const sendEmail = asyncHandler(
         let transporter = nodemailer.createTransport({
             service: 'gmail',
             auth: {
-              user: "gilbert.ateka@aimsoft.co.ke",
+              user: "fdfdfdfd",
               pass: "vdyxgaxrcvlofhvx",
             },
           });
